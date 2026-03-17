@@ -27,6 +27,10 @@ dist-ssr
 .claude/
 CLAUDE.md
 
+# Environment variables
+.env
+.env.local
+
 # Vite cache
 .vite/
 .vercel

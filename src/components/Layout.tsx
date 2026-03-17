@@ -1,7 +1,8 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useStore } from '@/store';
-import { Sun, Moon, GraduationCap, LayoutDashboard, BookOpen, Scale, Download, Upload, ClipboardList, Undo2, Redo2, Calculator } from 'lucide-react';
-import { useRef } from 'react';
+import { useAuth } from '@/lib/auth';
+import { Sun, Moon, GraduationCap, LayoutDashboard, BookOpen, Scale, Download, Upload, ClipboardList, Undo2, Redo2, Calculator, LogOut, Cloud } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -13,7 +14,9 @@ const navItems = [
 
 export function Layout() {
   const { theme, toggleTheme, exportData, importData, undo, redo, canUndo, canRedo } = useStore();
+  const { user, signOut, syncToCloud } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const handleExport = () => {
     const data = exportData();
@@ -69,6 +72,45 @@ export function Layout() {
             <button onClick={toggleTheme} className={btnClass} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
               {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </button>
+            {user && (
+              <div className="relative ml-1">
+                <button
+                  onClick={() => setShowUserMenu((v) => !v)}
+                  className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/30 dark:border-border hover:border-white/60 dark:hover:border-primary transition-colors"
+                >
+                  {user.user_metadata?.avatar_url ? (
+                    <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-primary flex items-center justify-center text-white text-sm font-bold">
+                      {(user.email?.[0] ?? '?').toUpperCase()}
+                    </div>
+                  )}
+                </button>
+                {showUserMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-surface-secondary border border-border rounded-lg shadow-lg z-50 py-1">
+                      <div className="px-3 py-2 border-b border-border">
+                        <p className="text-sm font-medium text-text truncate">{user.user_metadata?.full_name ?? user.email}</p>
+                        <p className="text-xs text-text-secondary truncate">{user.email}</p>
+                      </div>
+                      <button
+                        onClick={() => { syncToCloud(); setShowUserMenu(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text hover:bg-surface-tertiary transition-colors"
+                      >
+                        <Cloud className="w-4 h-4" /> Sync Now
+                      </button>
+                      <button
+                        onClick={() => { signOut(); setShowUserMenu(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger hover:bg-surface-tertiary transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" /> Sign Out
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </header>
