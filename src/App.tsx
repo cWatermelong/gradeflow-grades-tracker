@@ -10,6 +10,8 @@ import { Login } from '@/pages/Login';
 import { useStore } from '@/store';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 function AppRoutes() {
   const theme = useStore((s) => s.theme);
@@ -69,6 +71,8 @@ function App() {
       <AuthProvider>
         <AppRoutes />
       </AuthProvider>
+      <Analytics />
+      <SpeedInsights />
     </BrowserRouter>
   );
 }
