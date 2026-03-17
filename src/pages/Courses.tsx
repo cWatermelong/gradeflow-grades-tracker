@@ -269,7 +269,7 @@ function WhatIfCalculator({ course }: { course: DetailedCourse }) {
 }
 
 function CourseCard({ course }: { course: DetailedCourse }) {
-  const { removeDetailedCourse, updateDetailedCourse, addAssessment, getDetailedCourseGrade, getDetailedCourseLetter, moveDetailedCourse, detailedCourses } = useStore();
+  const { removeDetailedCourse, updateDetailedCourse, addAssessment, getDetailedCourseGrade, getDetailedCourseLetter, moveDetailedCourse, detailedCourses, gradeScale } = useStore();
   const [expanded, setExpanded] = useState(true);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState(course.name);
@@ -360,7 +360,20 @@ function CourseCard({ course }: { course: DetailedCourse }) {
           ) : (
             <div>
               <h2 className="text-lg font-semibold text-text">{course.name}</h2>
-              <span className="text-xs text-text-secondary">{course.creditHours} credit{course.creditHours !== 1 ? 's' : ''}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-text-secondary">{course.creditHours} credit{course.creditHours !== 1 ? 's' : ''}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-text-secondary">CourseAvg:</span>
+                  <select
+                    value={course.courseAvg ?? ''}
+                    onChange={(e) => updateDetailedCourse(course.id, { courseAvg: e.target.value || undefined })}
+                    className={`px-1.5 py-0.5 rounded border border-border bg-surface text-xs focus:outline-none focus:ring-2 focus:ring-accent ${course.courseAvg ? 'text-text' : 'text-text-secondary'}`}
+                  >
+                    <option value="">—</option>
+                    {gradeScale.map((g) => <option key={g.id} value={g.letter}>{g.letter}</option>)}
+                  </select>
+                </div>
+              </div>
             </div>
           )}
         </div>

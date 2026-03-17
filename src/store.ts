@@ -114,7 +114,7 @@ interface AppState {
   // Detailed courses
   addDetailedCourse: (name: string, creditHours: number) => void;
   removeDetailedCourse: (id: string) => void;
-  updateDetailedCourse: (id: string, data: Partial<Pick<DetailedCourse, 'name' | 'creditHours'>>) => void;
+  updateDetailedCourse: (id: string, data: Partial<Pick<DetailedCourse, 'name' | 'creditHours' | 'courseAvg'>>) => void;
   moveDetailedCourse: (id: string, direction: 'up' | 'down') => void;
   addAssessment: (courseId: string, assessment: Omit<Assessment, 'id'>) => void;
   updateAssessment: (courseId: string, assessmentId: string, data: Partial<Assessment>) => void;

@@ -20,6 +20,7 @@ export interface DetailedCourse {
   name: string;
   creditHours: number;
   assessments: Assessment[];
+  courseAvg?: string; // letter grade for class average
 }
 
 export interface Course {
@@ -29,6 +30,7 @@ export interface Course {
   letterGrade: string;
   percentage?: number;
   linkedCourseId?: string;
+  courseAvg?: string; // letter grade for class average
 }
 
 export type SemesterStatus = 'in-progress' | 'completed';

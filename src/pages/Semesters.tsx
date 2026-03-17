@@ -17,6 +17,7 @@ function CourseRow({
   const [name, setName] = useState(course.name);
   const [credits, setCredits] = useState(course.creditHours.toString());
   const [grade, setGrade] = useState(course.letterGrade);
+  const [courseAvg, setCourseAvg] = useState(course.courseAvg ?? '');
 
   const gradePoint = getGradePoint(course.letterGrade);
   const scaleEntry = gradeScale.find((e) => e.letter === course.letterGrade);
@@ -27,6 +28,7 @@ function CourseRow({
       name: name.trim() || course.name,
       creditHours: parseFloat(credits) || course.creditHours,
       letterGrade: grade,
+      courseAvg: courseAvg || undefined,
     });
     setEditing(false);
   };
@@ -35,6 +37,7 @@ function CourseRow({
     setName(course.name);
     setCredits(course.creditHours.toString());
     setGrade(course.letterGrade);
+    setCourseAvg(course.courseAvg ?? '');
     setEditing(false);
   };
 
@@ -53,6 +56,12 @@ function CourseRow({
           </select>
         </td>
         <td className="px-4 py-2 text-center text-sm text-text-secondary">{getGradePoint(grade).toFixed(1)}</td>
+        <td className="px-4 py-2">
+          <select value={courseAvg} onChange={(e) => setCourseAvg(e.target.value)} className={`px-2 py-1 rounded border border-border bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-accent ${courseAvg ? 'text-text' : 'text-text-secondary'}`}>
+            <option value="">—</option>
+            {gradeOptions.map((g) => <option key={g} value={g}>{g}</option>)}
+          </select>
+        </td>
         <td className="px-4 py-2">
           <div className="flex gap-1 justify-end">
             <button onClick={save} className="p-1 text-success hover:bg-success/10 rounded"><Check className="w-4 h-4" /></button>
@@ -75,6 +84,7 @@ function CourseRow({
       <td className="px-4 py-2 text-sm text-text text-center">{course.creditHours}</td>
       <td className={`px-4 py-2 text-sm text-center ${isFailing ? 'text-danger font-medium' : 'text-text'}`}>{course.letterGrade}</td>
       <td className="px-4 py-2 text-sm text-text-secondary text-center">{gradePoint.toFixed(1)}</td>
+      <td className="px-4 py-2 text-sm text-text-secondary text-center">{course.courseAvg ?? '—'}</td>
       <td className="px-4 py-2">
         <div className="flex gap-1 justify-end">
           <button onClick={() => setEditing(true)} className="p-1 text-text-secondary hover:text-accent hover:bg-accent/10 rounded"><Edit2 className="w-4 h-4" /></button>
@@ -100,6 +110,7 @@ function SemesterCard({ semester, index, total }: {
   const [courseName, setCourseName] = useState('');
   const [courseCredits, setCourseCredits] = useState('0.5');
   const [courseGrade, setCourseGrade] = useState(gradeScale[0]?.letter ?? 'A');
+  const [newCourseAvg, setNewCourseAvg] = useState('');
 
   const gradeOptions = gradeScale.map((g) => g.letter);
   const gpa = getSemesterGPA(semester.id);
@@ -113,10 +124,12 @@ function SemesterCard({ semester, index, total }: {
       name: courseName.trim(),
       creditHours: parseFloat(courseCredits) || 0.5,
       letterGrade: courseGrade,
+      courseAvg: newCourseAvg || undefined,
     });
     setCourseName('');
     setCourseCredits('0.5');
     setCourseGrade(gradeScale[0]?.letter ?? 'A');
+    setNewCourseAvg('');
     setAdding(false);
   };
 
@@ -204,9 +217,10 @@ function SemesterCard({ semester, index, total }: {
               <thead>
                 <tr className="bg-surface-tertiary/50 text-xs uppercase text-text-secondary">
                   <th className="px-4 py-2 text-left font-medium">Course</th>
-                  <th className="px-4 py-2 text-center font-medium">Credits</th>
+                  <th className="px-4 py-2 text-center font-medium">Weight</th>
+                  <th className="px-4 py-2 text-center font-medium">Mark</th>
                   <th className="px-4 py-2 text-center font-medium">Grade</th>
-                  <th className="px-4 py-2 text-center font-medium">Points</th>
+                  <th className="px-4 py-2 text-center font-medium">CourseAvg</th>
                   <th className="px-4 py-2 text-right font-medium">Actions</th>
                 </tr>
               </thead>
@@ -227,12 +241,19 @@ function SemesterCard({ semester, index, total }: {
                   <input value={courseName} onChange={(e) => setCourseName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddCourse()} placeholder="e.g. Calculus I" className="px-3 py-1.5 rounded-lg border border-border bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent" autoFocus />
                 </div>
                 <div>
-                  <label className="text-xs text-text-secondary block mb-1">Credits</label>
+                  <label className="text-xs text-text-secondary block mb-1">Weight</label>
                   <input type="number" step="0.5" value={courseCredits} onChange={(e) => setCourseCredits(e.target.value)} className="w-20 px-3 py-1.5 rounded-lg border border-border bg-surface text-text text-sm text-center focus:outline-none focus:ring-2 focus:ring-accent" min="0.5" />
                 </div>
                 <div>
-                  <label className="text-xs text-text-secondary block mb-1">Grade</label>
+                  <label className="text-xs text-text-secondary block mb-1">Mark</label>
                   <select value={courseGrade} onChange={(e) => setCourseGrade(e.target.value)} className="px-3 py-1.5 rounded-lg border border-border bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent">
+                    {gradeOptions.map((g) => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-text-secondary block mb-1">CourseAvg</label>
+                  <select value={newCourseAvg} onChange={(e) => setNewCourseAvg(e.target.value)} className={`px-3 py-1.5 rounded-lg border border-border bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-accent ${newCourseAvg ? 'text-text' : 'text-text-secondary'}`}>
+                    <option value="">—</option>
                     {gradeOptions.map((g) => <option key={g} value={g}>{g}</option>)}
                   </select>
                 </div>
@@ -293,9 +314,10 @@ function PrintView() {
                 <thead>
                   <tr className="border-b border-gray-300">
                     <th className="text-left py-1 font-medium text-gray-700">Course</th>
-                    <th className="text-center py-1 font-medium text-gray-700">Credits</th>
+                    <th className="text-center py-1 font-medium text-gray-700">Weight</th>
+                    <th className="text-center py-1 font-medium text-gray-700">Mark</th>
                     <th className="text-center py-1 font-medium text-gray-700">Grade</th>
-                    <th className="text-center py-1 font-medium text-gray-700">Points</th>
+                    <th className="text-center py-1 font-medium text-gray-700">CourseAvg</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -305,6 +327,7 @@ function PrintView() {
                       <td className="py-1 text-center text-gray-700">{c.creditHours}</td>
                       <td className="py-1 text-center text-gray-900">{c.letterGrade}</td>
                       <td className="py-1 text-center text-gray-700">{getGradePoint(c.letterGrade).toFixed(1)}</td>
+                      <td className="py-1 text-center text-gray-700">{c.courseAvg ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>
