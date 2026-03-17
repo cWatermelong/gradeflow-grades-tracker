@@ -118,7 +118,7 @@ export function GradeScale() {
           </button>
           <button
             onClick={() => setAdding(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary dark:bg-accent text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
           >
             <Plus className="w-4 h-4" />
             Add Entry
@@ -168,7 +168,7 @@ export function GradeScale() {
                 <label className="text-xs text-text-secondary block mb-1">Points</label>
                 <input type="number" step="0.1" value={gp} onChange={(e) => setGp(e.target.value)} placeholder="4.0" className="w-16 px-3 py-1.5 rounded-lg border border-border bg-surface text-text text-sm text-center focus:outline-none focus:ring-2 focus:ring-accent" />
               </div>
-              <button onClick={handleAdd} className="px-4 py-1.5 bg-primary dark:bg-accent text-white rounded-lg text-sm font-medium hover:opacity-90">Add</button>
+              <button onClick={handleAdd} className="px-4 py-1.5 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90">Add</button>
               <button onClick={() => setAdding(false)} className="px-4 py-1.5 border border-border text-text-secondary rounded-lg text-sm hover:bg-surface-tertiary">Cancel</button>
             </div>
           </div>

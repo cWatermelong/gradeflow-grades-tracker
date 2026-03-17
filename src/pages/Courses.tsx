@@ -483,7 +483,7 @@ function CourseCard({ course }: { course: DetailedCourse }) {
                   <label className="text-xs text-text-secondary block mb-1">Grade (% or a/b)</label>
                   <input value={aGrade} onChange={(e) => setAGrade(e.target.value)} placeholder="90 or 45/50" className="w-24 px-3 py-1.5 rounded-lg border border-border bg-surface text-text text-sm text-center focus:outline-none focus:ring-2 focus:ring-accent" />
                 </div>
-                <button onClick={handleAddAssessment} className="px-4 py-1.5 bg-primary dark:bg-accent text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Add</button>
+                <button onClick={handleAddAssessment} className="px-4 py-1.5 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Add</button>
                 <button onClick={() => setAdding(false)} className="px-4 py-1.5 border border-border text-text-secondary rounded-lg text-sm hover:bg-surface-tertiary transition-colors">Cancel</button>
               </div>
             ) : (
@@ -525,7 +525,7 @@ export function Courses() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-text">Courses</h1>
         {!adding && (
-          <button onClick={() => setAdding(true)} className="flex items-center gap-2 px-4 py-2 bg-primary dark:bg-accent text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+          <button onClick={() => setAdding(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
             <Plus className="w-4 h-4" />
             Add Course
           </button>
@@ -555,7 +555,7 @@ export function Courses() {
             <label className="text-sm text-text-secondary block mb-1">Credits</label>
             <input type="number" step="0.5" value={credits} onChange={(e) => setCredits(e.target.value)} className="w-24 px-3 py-2 rounded-lg border border-border bg-surface text-text text-center focus:outline-none focus:ring-2 focus:ring-accent" min="0.5" />
           </div>
-          <button onClick={handleAdd} className="px-5 py-2 bg-primary dark:bg-accent text-white rounded-lg font-medium hover:opacity-90 transition-opacity">Create</button>
+          <button onClick={handleAdd} className="px-5 py-2 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition-opacity">Create</button>
           <button onClick={() => { setAdding(false); setName(''); }} className="px-5 py-2 border border-border text-text-secondary rounded-lg hover:bg-surface-tertiary transition-colors">Cancel</button>
         </div>
       )}

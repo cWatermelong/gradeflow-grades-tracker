@@ -235,7 +235,7 @@ export function GPAProjector() {
                 <div className="px-4 pb-4 flex gap-2">
                   <button
                     onClick={() => addCourse(period.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary dark:bg-accent text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Add Course
@@ -243,7 +243,7 @@ export function GPAProjector() {
                   {period.id === periods[0].id && (
                     <button
                       onClick={addPeriod}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-light dark:bg-accent-light text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-light text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Add Academic Period

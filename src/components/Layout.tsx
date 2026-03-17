@@ -45,11 +45,11 @@ export function Layout() {
   return (
     <div className="min-h-screen bg-surface text-text print:bg-white">
       {/* Header */}
-      <header className="bg-primary dark:bg-surface-secondary border-b border-border print:hidden">
+      <header className="bg-topbar border-b border-border print:hidden">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <GraduationCap className="w-7 h-7 text-white dark:text-primary" />
-            <span className="text-xl font-bold text-white dark:text-primary">GradeFlow</span>
+            <GraduationCap className="w-7 h-7 text-white dark:text-text" />
+            <span className="text-xl font-bold text-white dark:text-text">GradeFlow</span>
           </div>
           <div className="flex items-center gap-1">
             <button onClick={undo} className={canUndo() ? btnClass : btnDisabled} disabled={!canUndo()} title="Undo (Ctrl+Z)">
@@ -74,7 +74,7 @@ export function Layout() {
       </header>
 
       {/* Navigation */}
-      <nav className="bg-surface-secondary border-b border-border print:hidden">
+      <nav className="bg-nav border-b border-border print:hidden">
         <div className="max-w-6xl mx-auto px-4 flex gap-1">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
@@ -83,7 +83,7 @@ export function Layout() {
               className={({ isActive }) =>
                 `flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                   isActive
-                    ? 'border-primary dark:border-accent text-primary dark:text-accent'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-text-secondary hover:text-text hover:border-border'
                 }`
               }

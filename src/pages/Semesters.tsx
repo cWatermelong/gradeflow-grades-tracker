@@ -257,7 +257,7 @@ function SemesterCard({ semester, index, total }: {
                     {gradeOptions.map((g) => <option key={g} value={g}>{g}</option>)}
                   </select>
                 </div>
-                <button onClick={handleAddCourse} className="px-4 py-1.5 bg-primary dark:bg-accent text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Add</button>
+                <button onClick={handleAddCourse} className="px-4 py-1.5 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Add</button>
                 <button onClick={() => setAdding(false)} className="px-4 py-1.5 border border-border text-text-secondary rounded-lg text-sm hover:bg-surface-tertiary transition-colors">Cancel</button>
               </div>
             ) : addingExisting ? (
@@ -269,7 +269,7 @@ function SemesterCard({ semester, index, total }: {
                     {availableCourses.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.creditHours} cr)</option>)}
                   </select>
                 </div>
-                <button onClick={handleAddExisting} className="px-4 py-1.5 bg-primary dark:bg-accent text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Add</button>
+                <button onClick={handleAddExisting} className="px-4 py-1.5 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Add</button>
                 <button onClick={() => { setAddingExisting(false); setSelectedCourseId(''); }} className="px-4 py-1.5 border border-border text-text-secondary rounded-lg text-sm hover:bg-surface-tertiary transition-colors">Cancel</button>
               </div>
             ) : (
@@ -386,7 +386,7 @@ export function Semesters() {
               </button>
             )}
             {!adding && (
-              <button onClick={() => setAdding(true)} className="flex items-center gap-2 px-4 py-2 bg-primary dark:bg-accent text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+              <button onClick={() => setAdding(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
                 <Plus className="w-4 h-4" /> Add Semester
               </button>
             )}
@@ -412,7 +412,7 @@ export function Semesters() {
               <label className="text-sm text-text-secondary block mb-1">Semester Name</label>
               <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAdd()} placeholder="e.g. Fall 2024" className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-2 focus:ring-accent" autoFocus />
             </div>
-            <button onClick={handleAdd} className="px-5 py-2 bg-primary dark:bg-accent text-white rounded-lg font-medium hover:opacity-90 transition-opacity">Create</button>
+            <button onClick={handleAdd} className="px-5 py-2 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition-opacity">Create</button>
             <button onClick={() => { setAdding(false); setName(''); }} className="px-5 py-2 border border-border text-text-secondary rounded-lg hover:bg-surface-tertiary transition-colors">Cancel</button>
           </div>
         )}

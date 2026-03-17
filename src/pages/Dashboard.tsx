@@ -137,7 +137,7 @@ export function Dashboard() {
           label="Cumulative GPA"
           value={cumulativeGPA > 0 ? cumulativeGPA.toFixed(2) : '—'}
           sublabel={completedGPA > 0 ? `Completed: ${completedGPA.toFixed(2)}` : undefined}
-          color="bg-primary/10 text-primary dark:bg-accent/10 dark:text-accent"
+          color="bg-primary/10 text-primary dark:bg-primary/10 dark:text-primary"
         />
         <StatCard
           icon={BookOpen}
