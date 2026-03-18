@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { loadUserData, saveUserData } from './database';
@@ -30,22 +30,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const currentUserId = useRef<string | null>(null);
 
   // Load cloud data into the store when user signs in
   const loadCloudData = useCallback(async (userId: string) => {
+    // Clear store first to prevent data leaking between accounts
+    useStore.getState().resetData();
+    currentUserId.current = userId;
+
     const data = await loadUserData(userId);
     if (data) {
-      const store = useStore.getState();
       // Cloud data exists — load it into the store
-      store.importData(JSON.stringify(data));
-    } else {
-      // No cloud data — push current localStorage data to cloud
-      await saveUserData(userId, {
-        gradeScale: useStore.getState().gradeScale,
-        semesters: useStore.getState().semesters,
-        detailedCourses: useStore.getState().detailedCourses,
-      });
+      useStore.getState().importData(JSON.stringify(data));
     }
+    // If no cloud data, user starts fresh with defaults (empty semesters/courses)
   }, []);
 
   useEffect(() => {
@@ -87,6 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsub = useStore.subscribe(() => {
       clearTimeout(timeout);
       timeout = setTimeout(() => {
+        // Only save if this user is still signed in
+        if (currentUserId.current !== user.id) return;
         const { gradeScale, semesters, detailedCourses } = useStore.getState();
         saveUserData(user.id, { gradeScale, semesters, detailedCourses });
       }, 1500);
@@ -116,7 +116,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     if (!supabase) return;
+    currentUserId.current = null;
     await supabase.auth.signOut();
+    useStore.getState().resetData();
     setUser(null);
     setSession(null);
   };

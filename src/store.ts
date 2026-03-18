@@ -146,6 +146,9 @@ interface AppState {
   // Export/Import
   exportData: () => string;
   importData: (json: string) => boolean;
+
+  // Reset data (for sign-out)
+  resetData: () => void;
 }
 
 function pushHistory(state: AppState) {
@@ -495,6 +498,13 @@ export const useStore = create<AppState>()(
       exportData: () => {
         const { gradeScale, semesters, detailedCourses } = get();
         return JSON.stringify({ gradeScale, semesters, detailedCourses }, null, 2);
+      },
+      resetData: () => {
+        set({
+          gradeScale: DEFAULT_GRADE_SCALE,
+          semesters: [],
+          detailedCourses: [],
+        });
       },
       importData: (json) => {
         try {
