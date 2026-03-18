@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '@/store';
-import { TrendingUp, BookOpen, Award, BarChart3, Target, CheckCircle, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { TrendingUp, BookOpen, Award, BarChart3, Target, CheckCircle, Clock, GraduationCap, Plus, ClipboardList, ArrowRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 function StatCard({ icon: Icon, label, value, sublabel, color }: {
@@ -126,6 +127,65 @@ export function Dashboard() {
     return '#ef4444';
   };
 
+  const navigate = useNavigate();
+  const hasData = semesters.length > 0;
+
+  if (!hasData) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-text">Dashboard</h1>
+
+        <div className="bg-surface-secondary rounded-xl border border-border p-12 text-center">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <GraduationCap className="w-8 h-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-semibold text-text mb-2">Welcome to GradeFlow</h2>
+          <p className="text-text-secondary max-w-md mx-auto mb-6">
+            Start by adding your semesters and courses to track your grades, calculate your GPA, and visualize your academic progress.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => navigate('/semesters')}
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-4 h-4" /> Add Semester
+            </button>
+            <button
+              onClick={() => navigate('/courses')}
+              className="flex items-center gap-2 px-5 py-2.5 border border-border text-text-secondary rounded-lg font-medium hover:bg-surface-tertiary transition-colors"
+            >
+              <ClipboardList className="w-4 h-4" /> Add Course
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-surface-secondary rounded-xl border border-border p-5">
+            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-3">
+              <BookOpen className="w-5 h-5 text-accent" />
+            </div>
+            <h3 className="font-medium text-text mb-1">Create Semesters</h3>
+            <p className="text-sm text-text-secondary">Organize your courses by semester and track GPA for each term.</p>
+          </div>
+          <div className="bg-surface-secondary rounded-xl border border-border p-5">
+            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center mb-3">
+              <ClipboardList className="w-5 h-5 text-success" />
+            </div>
+            <h3 className="font-medium text-text mb-1">Track Assessments</h3>
+            <p className="text-sm text-text-secondary">Add assignments, exams, and quizzes with weighted grades to calculate your final mark.</p>
+          </div>
+          <div className="bg-surface-secondary rounded-xl border border-border p-5">
+            <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center mb-3">
+              <TrendingUp className="w-5 h-5 text-warning" />
+            </div>
+            <h3 className="font-medium text-text mb-1">Visualize Progress</h3>
+            <p className="text-sm text-text-secondary">See GPA trends, use the what-if calculator, and set target goals.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-text">Dashboard</h1>
@@ -203,9 +263,12 @@ export function Dashboard() {
           </div>
         </div>
       ) : (
-        <div className="bg-surface-secondary rounded-xl p-12 border border-border text-center">
-          <BarChart3 className="w-12 h-12 text-text-secondary mx-auto mb-3" />
-          <p className="text-text-secondary">Add semesters and courses to see your GPA trend chart.</p>
+        <div className="bg-surface-secondary rounded-xl p-10 border border-border text-center">
+          <div className="w-12 h-12 rounded-full bg-border/50 flex items-center justify-center mx-auto mb-3">
+            <BarChart3 className="w-6 h-6 text-text-secondary" />
+          </div>
+          <p className="font-medium text-text mb-1">No chart data yet</p>
+          <p className="text-sm text-text-secondary">Add courses to your semesters to see your GPA trend chart.</p>
         </div>
       )}
 
@@ -213,47 +276,48 @@ export function Dashboard() {
       <TargetGPACalculator />
 
       {/* Semester Summary */}
-      {semesters.length > 0 && (
-        <div className="bg-surface-secondary rounded-xl border border-border overflow-hidden">
-          <div className="px-5 py-4 border-b border-border">
-            <h2 className="text-lg font-semibold text-text">Semester Summary</h2>
-          </div>
-          <div className="divide-y divide-border">
-            {semesters.map((s) => {
-              const gpa = getSemesterGPA(s.id);
-              return (
-                <div key={s.id} className="px-5 py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <p className="font-medium text-text">{s.name}</p>
-                      <p className="text-sm text-text-secondary">
-                        {s.courses.length} course{s.courses.length !== 1 ? 's' : ''} &middot;{' '}
-                        {s.courses.reduce((sum, c) => sum + c.creditHours, 0)} credits
-                      </p>
-                    </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      s.status === 'completed'
-                        ? 'bg-success/10 text-success'
-                        : 'bg-warning/10 text-warning'
-                    }`}>
-                      {s.status === 'completed' ? 'Completed' : 'In Progress'}
-                    </span>
+      <div className="bg-surface-secondary rounded-xl border border-border overflow-hidden">
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-text">Semester Summary</h2>
+          <button onClick={() => navigate('/semesters')} className="text-sm text-primary hover:underline flex items-center gap-1">
+            View all <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        <div className="divide-y divide-border">
+          {semesters.map((s) => {
+            const gpa = getSemesterGPA(s.id);
+            return (
+              <div key={s.id} className="px-5 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="font-medium text-text">{s.name}</p>
+                    <p className="text-sm text-text-secondary">
+                      {s.courses.length} course{s.courses.length !== 1 ? 's' : ''} &middot;{' '}
+                      {s.courses.reduce((sum, c) => sum + c.creditHours, 0)} credits
+                    </p>
                   </div>
-                  <span className={`text-lg font-bold ${
-                    gpa >= 3.5 ? 'text-success'
-                      : gpa >= 2.5 ? 'text-accent'
-                        : gpa >= 1.5 ? 'text-warning'
-                          : gpa > 0 ? 'text-danger'
-                            : 'text-text-secondary'
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    s.status === 'completed'
+                      ? 'bg-success/10 text-success'
+                      : 'bg-warning/10 text-warning'
                   }`}>
-                    {s.courses.length > 0 ? gpa.toFixed(2) : '—'}
+                    {s.status === 'completed' ? 'Completed' : 'In Progress'}
                   </span>
                 </div>
-              );
-            })}
-          </div>
+                <span className={`text-lg font-bold ${
+                  gpa >= 3.5 ? 'text-success'
+                    : gpa >= 2.5 ? 'text-accent'
+                      : gpa >= 1.5 ? 'text-warning'
+                        : gpa > 0 ? 'text-danger'
+                          : 'text-text-secondary'
+                }`}>
+                  {s.courses.length > 0 ? gpa.toFixed(2) : '—'}
+                </span>
+              </div>
+            );
+          })}
         </div>
-      )}
+      </div>
     </div>
   );
 }

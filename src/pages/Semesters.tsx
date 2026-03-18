@@ -419,10 +419,26 @@ export function Semesters() {
 
         {filteredSemesters.length === 0 && !adding ? (
           <div className="bg-surface-secondary rounded-xl p-12 border border-border text-center">
-            <BookOpen className="w-12 h-12 text-text-secondary mx-auto mb-3" />
-            <p className="text-text-secondary">
-              {search ? 'No semesters match your search.' : 'No semesters yet. Click "Add Semester" to get started.'}
-            </p>
+            <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="w-7 h-7 text-accent" />
+            </div>
+            {search ? (
+              <>
+                <p className="font-medium text-text mb-1">No results found</p>
+                <p className="text-sm text-text-secondary">No semesters or courses match "{search}". Try a different search term.</p>
+              </>
+            ) : (
+              <>
+                <p className="font-medium text-text mb-1">No semesters yet</p>
+                <p className="text-sm text-text-secondary mb-5">Create your first semester to start tracking your courses and GPA.</p>
+                <button
+                  onClick={() => setAdding(true)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
+                >
+                  <Plus className="w-4 h-4" /> Add Semester
+                </button>
+              </>
+            )}
           </div>
         ) : (
           filteredSemesters.map((s, i) => (

@@ -562,10 +562,26 @@ export function Courses() {
 
       {filteredCourses.length === 0 && !adding ? (
         <div className="bg-surface-secondary rounded-xl p-12 border border-border text-center">
-          <ClipboardList className="w-12 h-12 text-text-secondary mx-auto mb-3" />
-          <p className="text-text-secondary">
-            {search ? 'No courses match your search.' : 'No courses yet. Create a course to track assessments and calculate your final grade.'}
-          </p>
+          <div className="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
+            <ClipboardList className="w-7 h-7 text-success" />
+          </div>
+          {search ? (
+            <>
+              <p className="font-medium text-text mb-1">No results found</p>
+              <p className="text-sm text-text-secondary">No courses match "{search}". Try a different search term.</p>
+            </>
+          ) : (
+            <>
+              <p className="font-medium text-text mb-1">No courses yet</p>
+              <p className="text-sm text-text-secondary mb-5">Create a course to track individual assessments and calculate your final grade.</p>
+              <button
+                onClick={() => setAdding(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
+              >
+                <Plus className="w-4 h-4" /> Add Course
+              </button>
+            </>
+          )}
         </div>
       ) : (
         filteredCourses.map((c) => <CourseCard key={c.id} course={c} />)
