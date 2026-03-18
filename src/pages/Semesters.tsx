@@ -1,7 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useStore } from '@/store';
-import { Plus, Trash2, Edit2, Check, X, ChevronDown, ChevronUp, BookOpen, Link, ArrowUp, ArrowDown, CheckCircle, Clock, Search, Printer, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X, ChevronDown, ChevronUp, BookOpen, Link, GripVertical, CheckCircle, Clock, Search, Printer, AlertTriangle } from 'lucide-react';
 import type { Course } from '@/types';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 function CourseRow({
   course,
@@ -95,12 +98,31 @@ function CourseRow({
   );
 }
 
-function SemesterCard({ semester, index, total }: {
+function SortableSemesterCard({ semester, id }: {
   semester: { id: string; name: string; courses: Course[]; status: 'in-progress' | 'completed' };
-  index: number;
-  total: number;
+  id: string;
 }) {
-  const { addCourse, addExistingCourse, removeSemester, renameSemester, getSemesterGPA, gradeScale, detailedCourses, setSemesterStatus, moveSemester } = useStore();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <SemesterCard semester={semester} dragHandleProps={{ ...attributes, ...listeners }} />
+    </div>
+  );
+}
+
+function SemesterCard({ semester, dragHandleProps }: {
+  semester: { id: string; name: string; courses: Course[]; status: 'in-progress' | 'completed' };
+  dragHandleProps?: Record<string, unknown>;
+}) {
+  const { addCourse, addExistingCourse, removeSemester, renameSemester, getSemesterGPA, gradeScale, detailedCourses, setSemesterStatus, reorderCourses } = useStore();
   const [expanded, setExpanded] = useState(true);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState(semester.name);
@@ -117,6 +139,21 @@ function SemesterCard({ semester, index, total }: {
 
   const linkedIds = new Set(semester.courses.filter((c) => c.linkedCourseId).map((c) => c.linkedCourseId));
   const availableCourses = detailedCourses.filter((c) => !linkedIds.has(c.id));
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor),
+  );
+
+  const handleCourseDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = semester.courses.findIndex((c) => c.id === active.id);
+    const newIndex = semester.courses.findIndex((c) => c.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      reorderCourses(semester.id, oldIndex, newIndex);
+    }
+  };
 
   const handleAddCourse = () => {
     if (!courseName.trim()) return;
@@ -154,6 +191,13 @@ function SemesterCard({ semester, index, total }: {
       {/* Semester Header */}
       <div className="px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
+          <button
+            {...dragHandleProps}
+            className="text-text-secondary/50 hover:text-text-secondary cursor-grab active:cursor-grabbing touch-none"
+            title="Drag to reorder"
+          >
+            <GripVertical className="w-5 h-5" />
+          </button>
           <button onClick={() => setExpanded(!expanded)} className="text-text-secondary hover:text-text">
             {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>
@@ -194,12 +238,6 @@ function SemesterCard({ semester, index, total }: {
               GPA: {gpa.toFixed(2)}
             </span>
           )}
-          <button onClick={() => moveSemester(semester.id, 'up')} disabled={index === 0} className={`p-1.5 rounded-lg ${index === 0 ? 'text-text-secondary/30' : 'text-text-secondary hover:text-accent hover:bg-accent/10'}`} title="Move up">
-            <ArrowUp className="w-4 h-4" />
-          </button>
-          <button onClick={() => moveSemester(semester.id, 'down')} disabled={index === total - 1} className={`p-1.5 rounded-lg ${index === total - 1 ? 'text-text-secondary/30' : 'text-text-secondary hover:text-accent hover:bg-accent/10'}`} title="Move down">
-            <ArrowDown className="w-4 h-4" />
-          </button>
           <button onClick={() => { setRenaming(true); setNewName(semester.name); }} className="p-1.5 text-text-secondary hover:text-accent hover:bg-accent/10 rounded-lg" title="Rename">
             <Edit2 className="w-4 h-4" />
           </button>
@@ -213,23 +251,27 @@ function SemesterCard({ semester, index, total }: {
       {expanded && (
         <div>
           {semester.courses.length > 0 && (
-            <table className="w-full">
-              <thead>
-                <tr className="bg-surface-tertiary/50 text-xs uppercase text-text-secondary">
-                  <th className="px-4 py-2 text-left font-medium">Course</th>
-                  <th className="px-4 py-2 text-center font-medium">Weight</th>
-                  <th className="px-4 py-2 text-center font-medium">Mark</th>
-                  <th className="px-4 py-2 text-center font-medium">Grade</th>
-                  <th className="px-4 py-2 text-center font-medium">CourseAvg</th>
-                  <th className="px-4 py-2 text-right font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {semester.courses.map((c) => (
-                  <CourseRow key={c.id} course={c} semesterId={semester.id} gradeOptions={gradeOptions} />
-                ))}
-              </tbody>
-            </table>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCourseDragEnd}>
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-surface-tertiary/50 text-xs uppercase text-text-secondary">
+                    <th className="px-4 py-2 text-left font-medium">Course</th>
+                    <th className="px-4 py-2 text-center font-medium">Weight</th>
+                    <th className="px-4 py-2 text-center font-medium">Mark</th>
+                    <th className="px-4 py-2 text-center font-medium">Grade</th>
+                    <th className="px-4 py-2 text-center font-medium">CourseAvg</th>
+                    <th className="px-4 py-2 text-right font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <SortableContext items={semester.courses.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+                    {semester.courses.map((c) => (
+                      <CourseRow key={c.id} course={c} semesterId={semester.id} gradeOptions={gradeOptions} />
+                    ))}
+                  </SortableContext>
+                </tbody>
+              </table>
+            </DndContext>
           )}
 
           {/* Add Course / Add Existing */}
@@ -348,10 +390,15 @@ function PrintView() {
 }
 
 export function Semesters() {
-  const { semesters, addSemester } = useStore();
+  const { semesters, addSemester, reorderSemesters } = useStore();
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const [search, setSearch] = useState('');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor),
+  );
 
   const filteredSemesters = useMemo(() => {
     if (!search.trim()) return semesters;
@@ -368,6 +415,18 @@ export function Semesters() {
     setName('');
     setAdding(false);
   };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = semesters.findIndex((s) => s.id === active.id);
+    const newIndex = semesters.findIndex((s) => s.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      reorderSemesters(oldIndex, newIndex);
+    }
+  };
+
+  const isSearching = search.trim().length > 0;
 
   return (
     <>
@@ -440,10 +499,19 @@ export function Semesters() {
               </>
             )}
           </div>
-        ) : (
-          filteredSemesters.map((s, i) => (
-            <SemesterCard key={s.id} semester={s} index={i} total={filteredSemesters.length} />
+        ) : isSearching ? (
+          // When searching, disable drag (filtered list doesn't map to real indices)
+          filteredSemesters.map((s) => (
+            <SemesterCard key={s.id} semester={s} />
           ))
+        ) : (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={semesters.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+              {semesters.map((s) => (
+                <SortableSemesterCard key={s.id} id={s.id} semester={s} />
+              ))}
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 

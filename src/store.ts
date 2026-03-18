@@ -104,22 +104,26 @@ interface AppState {
   renameSemester: (id: string, name: string) => void;
   setSemesterStatus: (id: string, status: SemesterStatus) => void;
   moveSemester: (id: string, direction: 'up' | 'down') => void;
+  reorderSemesters: (oldIndex: number, newIndex: number) => void;
 
   // Semester courses
   addCourse: (semesterId: string, course: Omit<Course, 'id'>) => void;
   updateCourse: (semesterId: string, courseId: string, course: Partial<Course>) => void;
   removeCourse: (semesterId: string, courseId: string) => void;
   addExistingCourse: (semesterId: string, detailedCourseId: string) => void;
+  reorderCourses: (semesterId: string, oldIndex: number, newIndex: number) => void;
 
   // Detailed courses
   addDetailedCourse: (name: string, creditHours: number) => void;
   removeDetailedCourse: (id: string) => void;
   updateDetailedCourse: (id: string, data: Partial<Pick<DetailedCourse, 'name' | 'creditHours' | 'courseAvg'>>) => void;
   moveDetailedCourse: (id: string, direction: 'up' | 'down') => void;
+  reorderDetailedCourses: (oldIndex: number, newIndex: number) => void;
   addAssessment: (courseId: string, assessment: Omit<Assessment, 'id'>) => void;
   updateAssessment: (courseId: string, assessmentId: string, data: Partial<Assessment>) => void;
   removeAssessment: (courseId: string, assessmentId: string) => void;
   moveAssessment: (courseId: string, assessmentId: string, direction: 'up' | 'down') => void;
+  reorderAssessments: (courseId: string, oldIndex: number, newIndex: number) => void;
   getDetailedCourseGrade: (courseId: string) => number | null;
   getDetailedCourseLetter: (courseId: string) => string;
 
@@ -159,6 +163,13 @@ function pushHistory(state: AppState) {
   historyStack.push(snap);
   if (historyStack.length > MAX_HISTORY) historyStack.shift();
   historyPointer = historyStack.length - 1;
+}
+
+function reorderArray<T>(arr: T[], oldIndex: number, newIndex: number): T[] {
+  const newArr = [...arr];
+  const [item] = newArr.splice(oldIndex, 1);
+  newArr.splice(newIndex, 0, item);
+  return newArr;
 }
 
 function moveInArray<T>(arr: T[], index: number, direction: 'up' | 'down'): T[] {
@@ -242,6 +253,11 @@ export const useStore = create<AppState>()(
         });
       },
 
+      reorderSemesters: (oldIndex, newIndex) => {
+        pushHistory(get());
+        set((state) => ({ semesters: reorderArray(state.semesters, oldIndex, newIndex) }));
+      },
+
       // Semester courses
       addCourse: (semesterId, course) => {
         pushHistory(get());
@@ -286,6 +302,16 @@ export const useStore = create<AppState>()(
           linkedCourseId: detailedCourseId,
         });
       },
+      reorderCourses: (semesterId, oldIndex, newIndex) => {
+        pushHistory(get());
+        set((state) => ({
+          semesters: state.semesters.map((s) =>
+            s.id === semesterId
+              ? { ...s, courses: reorderArray(s.courses, oldIndex, newIndex) }
+              : s
+          ),
+        }));
+      },
 
       // Detailed courses
       addDetailedCourse: (name, creditHours) => {
@@ -314,6 +340,10 @@ export const useStore = create<AppState>()(
           if (idx === -1) return state;
           return { detailedCourses: moveInArray(state.detailedCourses, idx, direction) };
         });
+      },
+      reorderDetailedCourses: (oldIndex, newIndex) => {
+        pushHistory(get());
+        set((state) => ({ detailedCourses: reorderArray(state.detailedCourses, oldIndex, newIndex) }));
       },
       addAssessment: (courseId, assessment) => {
         pushHistory(get());
@@ -358,6 +388,17 @@ export const useStore = create<AppState>()(
             return { ...c, assessments: moveInArray(c.assessments, idx, direction) };
           }),
         }));
+      },
+      reorderAssessments: (courseId, oldIndex, newIndex) => {
+        pushHistory(get());
+        set((state) => ({
+          detailedCourses: state.detailedCourses.map((c) =>
+            c.id === courseId
+              ? { ...c, assessments: reorderArray(c.assessments, oldIndex, newIndex) }
+              : c
+          ),
+        }));
+        get().syncLinkedCourses(courseId);
       },
       getDetailedCourseGrade: (courseId) => {
         const dc = get().detailedCourses.find((c) => c.id === courseId);

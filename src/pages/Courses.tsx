@@ -1,25 +1,25 @@
 import { useState, useMemo } from 'react';
 import { useStore, parseGradeInput, calculateWhatIf } from '@/store';
-import { Plus, Trash2, Edit2, Check, X, ChevronDown, ChevronUp, ClipboardList, ArrowUp, ArrowDown, Calculator, AlertTriangle, Search } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X, ChevronDown, ChevronUp, ClipboardList, GripVertical, Calculator, AlertTriangle, Search } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import type { Assessment, DetailedCourse } from '@/types';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const ASSESSMENT_TYPES = ['Assignment', 'Quiz', 'Exam', 'Test', 'Midterm', 'Final', 'Project', 'Lab', 'Participation', 'Other'];
 
 const CHART_COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
 
-function AssessmentRow({
+function SortableAssessmentRow({
   assessment,
   courseId,
-  index,
-  total,
 }: {
   assessment: Assessment;
   courseId: string;
-  index: number;
-  total: number;
 }) {
-  const { updateAssessment, removeAssessment, moveAssessment } = useStore();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: assessment.id });
+  const { updateAssessment, removeAssessment } = useStore();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(assessment.name);
   const [type, setType] = useState(assessment.type);
@@ -49,9 +49,15 @@ function AssessmentRow({
 
   const inputClass = "px-2 py-1 rounded border border-border bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent";
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   if (editing) {
     return (
-      <tr className="border-b border-border">
+      <tr ref={setNodeRef} style={style} className="border-b border-border">
         <td className="px-4 py-2"><input value={name} onChange={(e) => setName(e.target.value)} className={`${inputClass} w-full`} /></td>
         <td className="px-4 py-2">
           <select value={type} onChange={(e) => setType(e.target.value)} className={inputClass}>
@@ -79,9 +85,16 @@ function AssessmentRow({
   }
 
   return (
-    <tr className={`border-b border-border hover:bg-surface-tertiary/50 transition-colors ${isLow ? 'bg-danger/5' : ''}`}>
+    <tr ref={setNodeRef} style={style} className={`border-b border-border hover:bg-surface-tertiary/50 transition-colors ${isLow ? 'bg-danger/5' : ''}`}>
       <td className="px-4 py-2 text-sm text-text">
         <div className="flex items-center gap-1.5">
+          <button
+            {...attributes}
+            {...listeners}
+            className="text-text-secondary/40 hover:text-text-secondary cursor-grab active:cursor-grabbing touch-none"
+          >
+            <GripVertical className="w-3.5 h-3.5" />
+          </button>
           {isLow && <AlertTriangle className="w-3.5 h-3.5 text-danger flex-shrink-0" />}
           {assessment.name}
         </div>
@@ -94,12 +107,6 @@ function AssessmentRow({
       </td>
       <td className="px-4 py-2">
         <div className="flex gap-0.5 justify-end">
-          <button onClick={() => moveAssessment(courseId, assessment.id, 'up')} disabled={index === 0} className={`p-1 rounded ${index === 0 ? 'text-text-secondary/30' : 'text-text-secondary hover:text-accent hover:bg-accent/10'}`} title="Move up">
-            <ArrowUp className="w-3.5 h-3.5" />
-          </button>
-          <button onClick={() => moveAssessment(courseId, assessment.id, 'down')} disabled={index === total - 1} className={`p-1 rounded ${index === total - 1 ? 'text-text-secondary/30' : 'text-text-secondary hover:text-accent hover:bg-accent/10'}`} title="Move down">
-            <ArrowDown className="w-3.5 h-3.5" />
-          </button>
           <button onClick={() => setEditing(true)} className="p-1 text-text-secondary hover:text-accent hover:bg-accent/10 rounded"><Edit2 className="w-3.5 h-3.5" /></button>
           <button onClick={() => removeAssessment(courseId, assessment.id)} className="p-1 text-text-secondary hover:text-danger hover:bg-danger/10 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
         </div>
@@ -268,8 +275,25 @@ function WhatIfCalculator({ course }: { course: DetailedCourse }) {
   );
 }
 
-function CourseCard({ course }: { course: DetailedCourse }) {
-  const { removeDetailedCourse, updateDetailedCourse, addAssessment, getDetailedCourseGrade, getDetailedCourseLetter, moveDetailedCourse, detailedCourses, gradeScale } = useStore();
+function SortableCourseCard({ course }: { course: DetailedCourse }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: course.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <CourseCard course={course} dragHandleProps={{ ...attributes, ...listeners }} />
+    </div>
+  );
+}
+
+function CourseCard({ course, dragHandleProps }: { course: DetailedCourse; dragHandleProps?: Record<string, unknown> }) {
+  const { removeDetailedCourse, updateDetailedCourse, addAssessment, getDetailedCourseGrade, getDetailedCourseLetter, gradeScale, reorderAssessments } = useStore();
   const [expanded, setExpanded] = useState(true);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState(course.name);
@@ -284,11 +308,25 @@ function CourseCard({ course }: { course: DetailedCourse }) {
   const finalGrade = getDetailedCourseGrade(course.id);
   const letterGrade = getDetailedCourseLetter(course.id);
   const totalWeight = course.assessments.reduce((sum, a) => sum + a.weight, 0);
-  const courseIndex = detailedCourses.findIndex((c) => c.id === course.id);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor),
+  );
 
   // Grade notification
   const isFailing = finalGrade !== null && finalGrade < 50;
   const isLow = finalGrade !== null && finalGrade >= 50 && finalGrade < 60;
+
+  const handleAssessmentDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = course.assessments.findIndex((a) => a.id === active.id);
+    const newIndex = course.assessments.findIndex((a) => a.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      reorderAssessments(course.id, oldIndex, newIndex);
+    }
+  };
 
   const handleAddAssessment = () => {
     if (!aName.trim() || !aWeight.trim()) return;
@@ -334,6 +372,13 @@ function CourseCard({ course }: { course: DetailedCourse }) {
       {/* Course Header */}
       <div className="px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
+          <button
+            {...dragHandleProps}
+            className="text-text-secondary/50 hover:text-text-secondary cursor-grab active:cursor-grabbing touch-none"
+            title="Drag to reorder"
+          >
+            <GripVertical className="w-5 h-5" />
+          </button>
           <button onClick={() => setExpanded(!expanded)} className="text-text-secondary hover:text-text">
             {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>
@@ -388,12 +433,6 @@ function CourseCard({ course }: { course: DetailedCourse }) {
               </span>
             </div>
           )}
-          <button onClick={() => moveDetailedCourse(course.id, 'up')} disabled={courseIndex === 0} className={`p-1.5 rounded-lg ${courseIndex === 0 ? 'text-text-secondary/30' : 'text-text-secondary hover:text-accent hover:bg-accent/10'}`} title="Move up">
-            <ArrowUp className="w-4 h-4" />
-          </button>
-          <button onClick={() => moveDetailedCourse(course.id, 'down')} disabled={courseIndex === detailedCourses.length - 1} className={`p-1.5 rounded-lg ${courseIndex === detailedCourses.length - 1 ? 'text-text-secondary/30' : 'text-text-secondary hover:text-accent hover:bg-accent/10'}`} title="Move down">
-            <ArrowDown className="w-4 h-4" />
-          </button>
           <button onClick={() => { setRenaming(true); setNewName(course.name); setNewCredits(course.creditHours.toString()); }} className="p-1.5 text-text-secondary hover:text-accent hover:bg-accent/10 rounded-lg" title="Edit">
             <Edit2 className="w-4 h-4" />
           </button>
@@ -425,23 +464,27 @@ function CourseCard({ course }: { course: DetailedCourse }) {
 
           {/* Assessments table */}
           {course.assessments.length > 0 && (
-            <table className="w-full">
-              <thead>
-                <tr className="bg-surface-tertiary/50 text-xs uppercase text-text-secondary">
-                  <th className="px-4 py-2 text-left font-medium">Assessment</th>
-                  <th className="px-4 py-2 text-center font-medium">Type</th>
-                  <th className="px-4 py-2 text-center font-medium">Weight</th>
-                  <th className="px-4 py-2 text-center font-medium">Grade</th>
-                  <th className="px-4 py-2 text-center font-medium">Percent</th>
-                  <th className="px-4 py-2 text-right font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {course.assessments.map((a, i) => (
-                  <AssessmentRow key={a.id} assessment={a} courseId={course.id} index={i} total={course.assessments.length} />
-                ))}
-              </tbody>
-            </table>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAssessmentDragEnd}>
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-surface-tertiary/50 text-xs uppercase text-text-secondary">
+                    <th className="px-4 py-2 text-left font-medium">Assessment</th>
+                    <th className="px-4 py-2 text-center font-medium">Type</th>
+                    <th className="px-4 py-2 text-center font-medium">Weight</th>
+                    <th className="px-4 py-2 text-center font-medium">Grade</th>
+                    <th className="px-4 py-2 text-center font-medium">Percent</th>
+                    <th className="px-4 py-2 text-right font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <SortableContext items={course.assessments.map((a) => a.id)} strategy={verticalListSortingStrategy}>
+                    {course.assessments.map((a) => (
+                      <SortableAssessmentRow key={a.id} assessment={a} courseId={course.id} />
+                    ))}
+                  </SortableContext>
+                </tbody>
+              </table>
+            </DndContext>
           )}
 
           {/* Breakdown chart */}
@@ -500,11 +543,16 @@ function CourseCard({ course }: { course: DetailedCourse }) {
 }
 
 export function Courses() {
-  const { detailedCourses, addDetailedCourse } = useStore();
+  const { detailedCourses, addDetailedCourse, reorderDetailedCourses } = useStore();
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const [credits, setCredits] = useState('0.5');
   const [search, setSearch] = useState('');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor),
+  );
 
   const filteredCourses = useMemo(() => {
     if (!search.trim()) return detailedCourses;
@@ -519,6 +567,18 @@ export function Courses() {
     setCredits('0.5');
     setAdding(false);
   };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = detailedCourses.findIndex((c) => c.id === active.id);
+    const newIndex = detailedCourses.findIndex((c) => c.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      reorderDetailedCourses(oldIndex, newIndex);
+    }
+  };
+
+  const isSearching = search.trim().length > 0;
 
   return (
     <div className="space-y-6">
@@ -583,8 +643,16 @@ export function Courses() {
             </>
           )}
         </div>
-      ) : (
+      ) : isSearching ? (
         filteredCourses.map((c) => <CourseCard key={c.id} course={c} />)
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={detailedCourses.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+            {detailedCourses.map((c) => (
+              <SortableCourseCard key={c.id} course={c} />
+            ))}
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   );
