@@ -17,7 +17,7 @@ function AppRoutes() {
   const theme = useStore((s) => s.theme);
   const undo = useStore((s) => s.undo);
   const redo = useStore((s) => s.redo);
-  const { user, loading } = useAuth();
+  const { user, loading, isGuest } = useAuth();
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -47,8 +47,8 @@ function AppRoutes() {
     );
   }
 
-  // If Supabase is configured and user is not signed in, show login
-  if (supabase && !user) {
+  // If Supabase is configured and user is not signed in (and not guest), show login
+  if (supabase && !user && !isGuest) {
     return <Login />;
   }
 

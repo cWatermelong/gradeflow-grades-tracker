@@ -8,9 +8,11 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isGuest: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithGitHub: () => Promise<void>;
   signOut: () => Promise<void>;
+  continueAsGuest: () => void;
   syncToCloud: () => Promise<void>;
 }
 
@@ -18,9 +20,11 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
+  isGuest: false,
   signInWithGoogle: async () => {},
   signInWithGitHub: async () => {},
   signOut: async () => {},
+  continueAsGuest: () => {},
   syncToCloud: async () => {},
 });
 
@@ -30,20 +34,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
   const currentUserId = useRef<string | null>(null);
 
   // Load cloud data into the store when user signs in
   const loadCloudData = useCallback(async (userId: string) => {
-    // Clear store first to prevent data leaking between accounts
-    useStore.getState().resetData();
     currentUserId.current = userId;
 
-    const data = await loadUserData(userId);
-    if (data) {
-      // Cloud data exists — load it into the store
-      useStore.getState().importData(JSON.stringify(data));
+    const cloudData = await loadUserData(userId);
+
+    // Check if guest had data before signing in
+    const guestState = useStore.getState();
+    const guestHadData = guestState.semesters.length > 0 || guestState.detailedCourses.length > 0;
+
+    if (cloudData) {
+      // Cloud data exists — load it
+      // If guest had data and cloud is empty, merge guest data to cloud
+      if (guestHadData && cloudData.semesters.length === 0 && cloudData.detailedCourses.length === 0) {
+        await saveUserData(userId, {
+          gradeScale: guestState.gradeScale,
+          semesters: guestState.semesters,
+          detailedCourses: guestState.detailedCourses,
+        });
+      } else {
+        useStore.getState().resetData();
+        useStore.getState().importData(JSON.stringify(cloudData));
+      }
+    } else if (guestHadData) {
+      // No cloud data but guest had data — push it to cloud
+      await saveUserData(userId, {
+        gradeScale: guestState.gradeScale,
+        semesters: guestState.semesters,
+        detailedCourses: guestState.detailedCourses,
+      });
+    } else {
+      // No cloud data, no guest data — fresh start
+      useStore.getState().resetData();
     }
-    // If no cloud data, user starts fresh with defaults (empty semesters/courses)
+
+    setIsGuest(false);
   }, []);
 
   useEffect(() => {
@@ -121,6 +150,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useStore.getState().resetData();
     setUser(null);
     setSession(null);
+    setIsGuest(false);
+  };
+
+  const continueAsGuest = () => {
+    setIsGuest(true);
   };
 
   const syncToCloud = async () => {
@@ -130,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signInWithGoogle, signInWithGitHub, signOut, syncToCloud }}>
+    <AuthContext.Provider value={{ user, session, loading, isGuest, signInWithGoogle, signInWithGitHub, signOut, continueAsGuest, syncToCloud }}>
       {children}
     </AuthContext.Provider>
   );

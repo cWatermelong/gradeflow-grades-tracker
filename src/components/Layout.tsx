@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useStore } from '@/store';
 import { useAuth } from '@/lib/auth';
-import { Sun, Moon, GraduationCap, LayoutDashboard, BookOpen, Scale, Download, Upload, ClipboardList, Undo2, Redo2, Calculator, LogOut, Cloud } from 'lucide-react';
+import { Sun, Moon, GraduationCap, LayoutDashboard, BookOpen, Scale, Download, Upload, ClipboardList, Undo2, Redo2, Calculator, LogOut, Cloud, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 const navItems = [
@@ -14,9 +14,10 @@ const navItems = [
 
 export function Layout() {
   const { theme, toggleTheme, exportData, importData, undo, redo, canUndo, canRedo } = useStore();
-  const { user, signOut, syncToCloud } = useAuth();
+  const { user, isGuest, signOut, signInWithGoogle, syncToCloud } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const handleExport = () => {
     const data = exportData();
@@ -136,6 +137,35 @@ export function Layout() {
           ))}
         </div>
       </nav>
+
+      {/* Guest Banner */}
+      {isGuest && !bannerDismissed && (
+        <div className="bg-primary/10 border-b border-primary/20 print:hidden">
+          <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <Cloud className="w-4 h-4 text-primary shrink-0" />
+              <p className="text-sm text-text truncate">
+                <span className="font-medium">Guest mode</span>
+                <span className="text-text-secondary"> — Sign in to sync your data across devices</span>
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={signInWithGoogle}
+                className="px-3 py-1 bg-primary text-white rounded-md text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Sign in
+              </button>
+              <button
+                onClick={() => setBannerDismissed(true)}
+                className="p-1 text-text-secondary hover:text-text transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-6">

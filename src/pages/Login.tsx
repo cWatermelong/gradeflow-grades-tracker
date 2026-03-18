@@ -2,7 +2,7 @@ import { GraduationCap } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 export function Login() {
-  const { signInWithGoogle, signInWithGitHub } = useAuth();
+  const { signInWithGoogle, signInWithGitHub, continueAsGuest } = useAuth();
 
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center p-4">
@@ -38,10 +38,26 @@ export function Login() {
             </svg>
             Continue with GitHub
           </button>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-surface-secondary px-2 text-text-secondary">or</span>
+            </div>
+          </div>
+
+          <button
+            onClick={continueAsGuest}
+            className="w-full px-4 py-2.5 border border-border rounded-lg text-text-secondary font-medium hover:bg-surface-tertiary hover:text-text transition-colors"
+          >
+            Continue as Guest
+          </button>
         </div>
 
-        <p className="text-center text-text-secondary text-sm mt-6">
-          Sign in to sync your data across devices
+        <p className="text-center text-text-secondary text-xs mt-6">
+          Guest data is saved locally and won't sync across devices
         </p>
       </div>
     </div>
